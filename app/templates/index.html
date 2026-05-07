@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Speech AI</title>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: Inter;
+        background: radial-gradient(circle at top, #1e293b, #020617);
+        color: #e2e8f0;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      /* container */
+      .app {
+        width: 100%;
+        max-width: 1100px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+      }
+
+      /* heading */
+      h1 {
+        font-family: Syne;
+        font-size: 56px;
+        background: linear-gradient(90deg, #6366f1, #22c55e);
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+      }
+
+      /* card */
+      .card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(30px);
+        border-radius: 24px;
+        padding: 30px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      }
+
+      /* upload */
+      .upload {
+        border: 2px dashed rgba(255, 255, 255, 0.2);
+        border-radius: 18px;
+        padding: 50px;
+        text-align: center;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+      .upload:hover {
+        border-color: #6366f1;
+        transform: scale(1.02);
+      }
+
+      /* buttons */
+      button {
+        width: 100%;
+        padding: 14px;
+        border: none;
+        border-radius: 14px;
+        margin-top: 12px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: 0.3s;
+      }
+
+      .primary {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      }
+      .success {
+        background: #22c55e;
+      }
+      .danger {
+        background: #ef4444;
+      }
+
+      button:hover {
+        transform: translateY(-2px);
+      }
+
+      /* recording */
+      .recording {
+        display: none;
+        align-items: center;
+        gap: 10px;
+        margin-top: 10px;
+        color: #ef4444;
+      }
+
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #ef4444;
+        animation: pulse 1s infinite;
+      }
+      @keyframes pulse {
+        0% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+
+      /* waveform */
+      .wave {
+        display: flex;
+        gap: 3px;
+        margin-top: 10px;
+      }
+      .wave span {
+        width: 4px;
+        height: 20px;
+        background: #22c55e;
+        animation: wave 1s infinite ease-in-out;
+      }
+      .wave span:nth-child(2) {
+        animation-delay: 0.1s;
+      }
+      .wave span:nth-child(3) {
+        animation-delay: 0.2s;
+      }
+      .wave span:nth-child(4) {
+        animation-delay: 0.3s;
+      }
+
+      @keyframes wave {
+        0%,
+        100% {
+          height: 10px;
+        }
+        50% {
+          height: 25px;
+        }
+      }
+
+      /* result */
+      .result {
+        margin-top: 20px;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 15px;
+        border-radius: 14px;
+      }
+
+      /* sentiment */
+      .badge {
+        padding: 6px 12px;
+        border-radius: 10px;
+        font-size: 12px;
+      }
+      .positive {
+        background: #22c55e33;
+        color: #22c55e;
+      }
+      .negative {
+        background: #ef444433;
+        color: #ef4444;
+      }
+      .neutral {
+        background: #64748b33;
+      }
+
+      /* progress */
+      .bar {
+        height: 6px;
+        border-radius: 10px;
+        margin-top: 6px;
+        background: #1e293b;
+        overflow: hidden;
+      }
+      .fill {
+        height: 100%;
+        background: #22c55e;
+      }
+
+      /* audio */
+      audio {
+        margin-top: 10px;
+        width: 100%;
+      }
+
+      /* responsive */
+      @media (max-width: 900px) {
+        .app {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="app">
+      <div>
+        <h1>Speech AI</h1>
+        <p>Transcribe & Analyze emotions instantly</p>
+      </div>
+
+      <div class="card">
+        <div class="upload" id="dropZone">
+          <input type="file" id="audioFile" hidden accept="audio/*"/>
+          <p>🎧 Drop or click to upload</p>
+        </div>
+
+        <button class="primary" id="uploadBtn">Upload & Analyze</button>
+        <button class="success" id="startBtn">🎙 Start</button>
+        <button class="danger" id="stopBtn" disabled>⏹ Stop</button>
+
+        <div class="recording" id="recordingStatus">
+          <div class="dot"></div>
+          Recording... <span id="timer">00:00</span>
+        </div>
+
+        <div class="wave" id="wave" style="display: none">
+          <span></span><span></span><span></span><span></span>
+        </div>
+
+        <div class="result" id="resultBox">No data yet...</div>
+
+        <div id="sentimentBox"></div>
+
+        <audio id="audioPlayer" controls style="display: none"></audio>
+      </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  </body>
+</html>
